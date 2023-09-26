@@ -50,4 +50,8 @@ const pro = new MyPromise((resolve, reject) => {
   resolve(123);
 });
 
-console.log(pro);
+
+
+
+console.log('ouyangjie 666 ');
+console.log('杰哥不要🙅、达咩');
