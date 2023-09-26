@@ -50,4 +50,13 @@ const pro = new MyPromise((resolve, reject) => {
   resolve(123);
 });
 
+
+for(let i =0;i< 100000;i++){
+  alert('ouyangjie666');
+  console.log("杰哥不要！、达咩")；
+}
+
+
+
+
 console.log(pro);
