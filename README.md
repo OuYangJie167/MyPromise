@@ -1,4 +1,6 @@
 # MyPromise
 手写Promise
 
-ouyangji 6666
+ouyangji 666 
+
+杰哥不要🙅、达咩
