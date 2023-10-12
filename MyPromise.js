@@ -243,6 +243,31 @@ class MyPromise {
       console.log(error);
     });
   }
+
+  /**
+   *  等待所有的Promise有结果之后
+   *  该方法返回的Promise完成
+   *  并且按照顺序将所有结果汇总
+   * @param {iterator} proms
+   */
+  static allSettled(proms) {
+    const ps = [];
+    for (const p of proms) {
+      ps.push(
+        MyPromise.resolve(p).then(
+          (value) => ({
+            status: FULFILLED,
+            value,
+          }),
+          (reason) => ({
+            status: REJECTED,
+            reason,
+          })
+        )
+      );
+      return MyPromise.all(ps);
+    }
+  }
 }
 
 const pro = new MyPromise((resolve, reject) => {
