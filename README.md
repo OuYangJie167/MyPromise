@@ -1,2 +1,3 @@
 # MyPromise
-手写Promise
+
+> 手写一个 Pomise
