@@ -122,6 +122,33 @@ class MyPromise {
   }
 
   /**
+   * 仅处理失败的场景
+   * @param {Function} onRejected
+   * @returns
+   */
+  catch(onRejected) {
+    return this.then(null, onRejected);
+  }
+
+  /**
+   * 无论成功或失败, 都会执行回调
+   * @param {Function} onSettled
+   * @returns
+   */
+  finally(onSettled) {
+    return this.then(
+      (data) => {
+        onSettled();
+        return data;
+      },
+      (reason) => {
+        onSettled();
+        throw reason;
+      }
+    );
+  }
+
+  /**
    * 更改任务状态
    * @param {String} newState 更改状态
    * @param {any} value 相关数据
@@ -155,14 +182,5 @@ class MyPromise {
 const pro = new MyPromise((resolve, reject) => {
   resolve(123);
 });
-
-
-for(let i =0;i< 100000;i++){
-  alert('ouyangjie666');
-  console.log("杰哥不要！、达咩")；
-}
-
-
-
 
 console.log(pro);
