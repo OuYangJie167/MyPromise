@@ -46,6 +46,7 @@ class MyPromise {
       executor(this._resolve.bind(this), this._reject.bind(this));
     } catch (error) {
       this._reject(error);
+      console.log(error);
     }
   }
 
@@ -73,7 +74,7 @@ class MyPromise {
       return;
     }
     // 遍历每个任务
-    while (this.handlers[0]) {
+    while (this._handlers[0]) {
       // 执行单个任务
       this._runOneHandler(handler);
       // 执行完成后删除
@@ -103,6 +104,7 @@ class MyPromise {
         }
       } catch (error) {
         reject(error);
+        console.log(error);
       }
     });
   }
@@ -208,10 +210,45 @@ class MyPromise {
       reject(reason);
     });
   }
+
+  /**
+   * 得到一个新的Promise
+   * 该Promise的状态取决于proms的执行
+   * proms是一个迭代器,包含多个Promise
+   * 全部Promise成功,则返回的Promise成功,数据为所有的Promise成功的数据,并且顺序是按照传入的数据排列
+   * 只要有一个Promise失败,则返回的Promise失败,失败原因为第一个失败的Promise的原因
+   * @param {iterator} proms
+   */
+  static all(proms) {
+    return new MyPromise((resolve, reject) => {
+      const results = [];
+      let count = 0; // Promise 的总数
+      let fulfilledCount = 0; // 已完成的数量
+      for (const p of proms) {
+        let index = count;
+        count++;
+        MyPromise.resolve(p).then((data) => {
+          fulfilledCount++;
+          results[index] = data;
+          if (fulfilledCount === count) {
+            resolve(results);
+          }
+        }, reject);
+      }
+      if (count === 0) {
+        resolve(results);
+      }
+    }).catch((error) => {
+      reject(error);
+      console.log(error);
+    });
+  }
 }
 
 const pro = new MyPromise((resolve, reject) => {
   resolve(123);
 });
-
+pro.then((data) => {
+  console.log(data);
+});
 console.log(pro);
