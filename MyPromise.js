@@ -1,6 +1,38 @@
 const PENDING = "pending";
 const FULFILLED = "fulfilled";
 const REJECTED = "rejected";
+
+/**
+ * 运行一个微队列任务
+ * 把传递的函数放到微队列中
+ * @param {Function} callback
+ */
+function runMicroTask(callback) {
+  // 判断 node 环境
+  if (process && process.nextTick) {
+    process.nextTick(callback);
+  } else if (MutationObserver) {
+    // 浏览器环境
+    const p = document.createElement("p");
+    const observer = new MutationObserver(callback);
+    observer.observe(p, {
+      childList: true,
+    });
+    p.innerHTML = "1";
+  } else {
+    setTimeout(callback, 0);
+  }
+}
+
+/**
+ * 判断一个数据是否为Promise对象
+ * @param {any} obj
+ * @returns
+ */
+function isPromise(obj) {
+  return !!(obj && typeof obj === "object" && obj.then === "function");
+}
+
 class MyPromise {
   /**
    * 创建一个Promise
@@ -9,11 +41,84 @@ class MyPromise {
   constructor(executor) {
     this._state = PENDING; // 任务状态
     this._value = undefined; // 数据
+    this._handlers = []; // 处理函数形式的队列
     try {
       executor(this._resolve.bind(this), this._reject.bind(this));
     } catch (error) {
       this._reject(error);
     }
+  }
+
+  /**
+   * 向处理队列中添加一个函数
+   * @param {Function} executor 添加函数
+   * @param {*} state 该函数什么状态下执行
+   * @param {Fucntion} resolve 让then函数返回的Promise成功
+   * @param {Function} reject 让then函数返回的Promise失败
+   */
+  _pushHandler(executor, state, resolve, reject) {
+    this._handlers.push({
+      executor,
+      state,
+      resolve,
+      reject,
+    });
+  }
+
+  /**
+   *根据实际情况,执行队列
+   */
+  _runHandlers() {
+    if (this._state === PENDING) {
+      return;
+    }
+    // 遍历每个任务
+    while (this.handlers[0]) {
+      // 执行单个任务
+      this._runOneHandler(handler);
+      // 执行完成后删除
+      this._handlers.shift();
+    }
+  }
+
+  /**
+   * 处理一个handler
+   * @param {Object} handler
+   */
+  _runOneHandler({ executor, state, resolve, reject }) {
+    runMicroTask(() => {
+      if (this._state !== state) {
+        // 状态不一致, 不处理
+        return;
+      }
+      if (typeof handles.executor !== "function") {
+        this._state === FULFILLED ? resolve(this._value) : reject(this._value);
+      }
+      try {
+        const result = executor(this._value);
+        if (isPromise(result)) {
+          result.then(resolve, reject);
+        } else {
+          resolve(result);
+        }
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Promsie A+ 规范 then
+   * @param {Function} onFulfilled
+   * @param {Function} onRejected
+   * @returns
+   */
+  then(onFulfilled, onRejected) {
+    return new MyPromise((resolve, reject) => {
+      this._pushHandler(onFulfilled, FULFILLED, resolve, reject);
+      this._pushHandler(onRejected, REJECTED, resolve, reject);
+      this._runHandlers(); // 执行队列
+    });
   }
 
   /**
@@ -28,6 +133,7 @@ class MyPromise {
     }
     this._state = newState;
     this._value = value;
+    this._runHandlers(); // 状态变化, 执行队列
   }
 
   /**
